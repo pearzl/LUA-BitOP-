@@ -74,7 +74,7 @@ The examples below show small Lua one-liners. Their expected output is shown aft
 
 Note that all bit operations return *signed* 32 bit numbers ([rationale](http://bitop.luajit.org/semantics.html#range)). And these print as signed decimal numbers by default.
 
-注意，所有的位运算都返回32位带符号数字（[原理](#Operational Semantics and Rationale-操作语义和原理)）。并且默认的作为带符号数字打印。
+注意，所有的位运算都返回32位带符号数字（操作语义和原理）。并且默认的作为带符号数字打印。
 
 For clarity the examples assume the definition of a helper function `printx()`. This prints its argument as an *unsigned* 32 bit hexadecimal number on all platforms:
 
@@ -92,7 +92,7 @@ end
 
 Normalizes a number to the numeric range for bit operations and returns it. This function is usually not needed since all bit operations already normalize all of their input arguments. Check the [operational semantics](http://bitop.luajit.org/semantics.html) for details.
 
-将一个数字规格化到位运算范围的数值范围内。这个函数通常不需要，因为所有的位运算已经对他们的输入参数进行了规格化处理。更详细的信息查看[操作语义](#Operational Semantics and Rationale-操作语义和原理) 
+将一个数字规格化到位运算范围的数值范围内。这个函数通常不需要，因为所有的位运算已经对他们的输入参数进行了规格化处理。更详细的信息查看操作语义和原理
 
 ```
 print(0xffffffff)                --> 4294967295 (*)
@@ -105,7 +105,7 @@ print(bit.tobit(2^40 + 1234))    --> 1234
 
 (*) See the treatment of [hex literals](http://bitop.luajit.org/semantics.html#hexlit) for an explanation why the printed numbers in the first two lines differ (if your Lua installation uses a `double` number type).
 
-如果你的Lua使用double数字类型安装，（*）部分请参阅[十六进制文字]()以解释为什么前两行输出的数字不同
+如果你的Lua使用double数字类型安装，（*）部分请参阅十六进制文字以解释为什么前两行输出的数字不同
 
 ### `y = bit.tohex(x [,n])`
 
