@@ -365,27 +365,59 @@ The different possible number types and the use of FP numbers cause some problem
 
   非常希望十六进制字面量在跨平台使用位运算的时候能被相同的处理。所有的位运算都接受32位的有符号或无符号数字（或者更多，往下看）。相同位模式的数字在所有的运算中都被同样的对待。
 
-## Modular Arithmetic
+## Modular Arithmetic-模运算
 
-Arithmetic operations on n-bit integers are usually based on the rules of [modular arithmetic](http://en.wikipedia.org/wiki/Modular_arithmetic) modulo 2n. Numbers wrap around when the mathematical result of operations is outside their defined range. This simplifies hardware implementations and some algorithms actually require this behavior (like many cryptographic functions).
+Arithmetic operations on n-bit integers are usually based on the rules of [modular arithmetic](http://en.wikipedia.org/wiki/Modular_arithmetic) modulo 2^n. Numbers wrap around when the mathematical result of operations is outside their defined range. This simplifies hardware implementations and some algorithms actually require this behavior (like many cryptographic functions).
+
+n位整数的模运算通常基于模数为2^n的的原则。当运算的数学计算结果超出了定义的范围时数字将被折叠。这简化了硬件实现并且一些算法通常也要求这个行为（比如很多加密函数）
 
 E.g. for 32 bit integers the following holds: `0xffffffff + 1 = 0`
 
+例如，对于32位整数： `0xffffffff + 1 = 0`
+
 **Arithmetic modulo 232** is trivially available if the Lua number type is a 32 bit integer. Otherwise normalization steps must be inserted. Modular arithmetic should work the same across all platforms as far as possible:
 
+如果Lua数字类型是32位整形那么**算术模数232**是可用的。否则必须进行标准化步骤。模运算应该在所有平台上尽可能的保持一致。
+
 - For the default number type of `double`, **arguments can be in the range of ±251** and still be safely normalized across all platforms by taking their least-significant 32 bits. The limit is derived from the way doubles are converted to integers.
+
+  对于默认数字类型`double`的，**参数可以在±251范围内**，并且通过取低32位的方式安全的进行跨平台标准化。这个限制是由doubles转换到integers的方式导出的
+
 - The function `bit.tobit` **can be used to explicitly normalize numbers** to implement **modular addition or subtraction**. E.g. `bit.tobit(0xffffffff + 1)` returns 0 on all platforms.
+
+  函数`bit.tobit`可以显示的标准化数字以实现模加减。例如：`bit.tobit(0xffffffff + 1)`在所有平台返回0
+
 - The limit on the argument range implies that modular multiplication is usually restricted to multiplying already normalized numbers with small constants. FP numbers are limited to 53 bits of precision, anyway. E.g. (230+1)2 does not return an odd number when computed with doubles.
+
+  参数范围的限制意味着模乘通常被限制为将已经归一化的数乘以小常数。浮点数无论如何都被限制为53位精度。例如(2^30+1)^2在使用doubles计算的时候不会返回一个基数。
 
 BTW: The `tr_i` function shown [here](http://bitop.luajit.org/api.html#shortcuts) is one of the non-linear functions of the (flawed) MD5 cryptographic hash and relies on modular arithmetic for correct operation. The result is fed back to other bitwise operations (not shown) and does not need to be normalized until the last step.
 
-## Restricted and Undefined Behavior
+顺便说一下：定义快捷方式一节中出现的`tr_i`函数是（有缺陷）MD5加密哈希中的一个非线性函数，并且依赖模运算的正确性。结果被返回到其他按位操作（未示出），并且在最后一步之前不需要被归一化。
+
+## Restricted and Undefined Behavior - 限制和未定义的行为
 
 The following rules are intended to give a precise and useful definition (for the programmer), yet give the implementation (interpreter and compiler) the maximum flexibility and the freedom to apply advanced optimizations. It's strongly advised *not* to rely on undefined or implementation-defined behavior.
 
+下面的规则旨在给出一个精确和游泳的定义（对程序员），但给予实现（解释器和编译器）最大的灵活性和自由度以应用到高级的优化。强烈建议不要依赖与未定义的活实现定义的行为。
+
 - All kinds of floating-point numbers are acceptable to the bitwise operations. None of them cause an error, but some may invoke undefined behavior:
+
+  所有的浮点数都对与位运算都是可接受的。他们不会出现错误，但可能出现未定义的行为。
+
   - -0 is treated the same as +0 on input and is never returned as a result.
+
+    -0和+0在输入中被视为相同的，并且也绝不会作为结果返回。
+
   - Passing **±Inf, NaN or numbers outside the range of ±251** as input yields an **undefined** result.
+
+    传递 **±Inf, NaN 或者超出±251范围的数字**作为输入将产生未定义的结果。
+
   - **Non-integral numbers** may be rounded or truncated in an **implementation-defined** way. This means the result could differ between different BitOp versions, different Lua VMs, on different platforms or even between interpreted vs. compiled code (as in [LuaJIT](http://luajit.org/)).
     Avoid passing fractional numbers to bitwise functions. Use `math.floor()` or `math.ceil()` to get defined behavior.
+
+    非整数可能以实现定义的方式四舍五入或者截断。这意味着不同版本的BitOp，不同的LuaVm和不同的平台，甚至在解释或编译代码（如在LuaJIT中）之间都是不同的。
+
 - Lua provides **auto-coercion of string arguments** to numbers by default. This behavior is **deprecated** for bitwise operations.
+
+  Lua默认提供提供了从字符串参数到数字的自动类型。这个行为在位运算中是无效的。
