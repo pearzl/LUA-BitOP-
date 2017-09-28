@@ -250,15 +250,21 @@ Lua BitOp is quite fast. This program runs in less than 90 milliseconds on a 3 G
 
 Lua BitOp很快。这个程序在一个3GHz CPU以标准方式安装的Lua上运行不足90毫秒，但执行了一百万次以上的位运算操作。如果你在需要更快的速度，查看LuaJIT。
 
-## Caveats
+## Caveats-注意事项
 
-### Signed Results
+### Signed Results-有符号结果
 
 Returning signed numbers from bitwise operations may be surprising to programmers coming from other programming languages which have both signed and unsigned types. But as long as you treat the results of bitwise operations uniformly everywhere, this shouldn't cause any problems.
 
+在其他具有有符号和无符号类型的语言中，从位运算中返回有符号数可能对程序造成一些意想不到的结果。但是，只要将位操作的结果统一处理，这不应该引起任何问题。
+
 Preferably format results with `bit.tohex` if you want a reliable unsigned string representation. Avoid the `"%x"` or `"%u"` formats for `string.format`. They fail on some architectures for negative numbers and can return more than 8 hex digits on others.
 
+如果想要一个可靠的无符号的字符串表示最好使用`bit.tohex`对结果进行格式化。避免对`string.format`使用`"%x"`和`"%u"`。他们在一些结构上会导致负数操纵失败，在其他结构上可能返回朝贡8位的十六进制数。
+
 You may also want to avoid the default number to string coercion, since this is a signed conversion. The coercion is used for string concatenation and all standard library functions which accept string arguments (such as `print()` or `io.write()`).
+
+您也可以避免使用默认的字符串强制号码，因为这是一个有符号的转换。这种强制被用于连接和所有接受字符串参数的标准库函数（例如`print()`和`io.write()`）
 
 ### Conditionals
 
