@@ -211,11 +211,15 @@ printx(bit.bswap(0x78563412)) --> 0x12345678
 
 ```
 
-## Example Program
+## Example Program-示例程序
 
 This is an implementation of the (naïve) *Sieve of Eratosthenes* algorithm. It counts the number of primes up to some maximum number.
 
+这是一个找质数算法的实现。它统计质数的个数直到某个最大值为止。
+
 A Lua table is used to hold a bit-vector. Every array index has 32 bits of the vector. Bitwise operations are used to access and modify them. Note that the shift counts don't need to be masked since this is already done by the BitOp shift and rotate functions.
+
+Lua表用于保存位向量。每个数组索引都有32位的向量。位运算用于访问和修改它们。请注意，移位计数不需要被屏蔽，因为这已经由BitOp shift和rotate函数完成了。
 
 ```
 local bit = require("bit")
@@ -243,6 +247,8 @@ io.write(string.format("Found %d primes up to %d\n", count, m))
 ```
 
 Lua BitOp is quite fast. This program runs in less than 90 milliseconds on a 3 GHz CPU with a standard Lua installation, but performs more than a million calls to bitwise functions. If you're looking for even more speed, check out [LuaJIT](http://luajit.org/).
+
+Lua BitOp很快。这个程序在一个3GHz CPU以标准方式安装的Lua上运行不足90毫秒，但执行了一百万次以上的位运算操作。如果你在需要更快的速度，查看LuaJIT。
 
 ## Caveats
 
