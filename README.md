@@ -111,6 +111,8 @@ print(bit.tobit(2^40 + 1234))    --> 1234
 
 Converts its first argument to a hex string. The number of hex digits is given by the absolute value of the optional second argument. Positive numbers between 1 and 8 generate lowercase hex digits. Negative numbers generate uppercase hex digits. Only the least-significant 4*|n| bits are used. The default is to generate 8 lowercase hex digits.
 
+将第一个参数转换位一个十六进制字符串，十六进制的位数由可选的第二个参数的绝对值决定，1和8之间的正数生成小写十六进制数。负数则生成大写的十六进制数。
+
 ```
 print(bit.tohex(1))              --> 00000001
 print(bit.tohex(-1))             --> ffffffff
@@ -125,6 +127,8 @@ print(bit.tohex(0x87654321, 4))  --> 4321
 
 Returns the bitwise **not** of its argument.
 
+返回参数值按位取反的结果
+
 ```
 print(bit.bnot(0))            --> -1
 printx(bit.bnot(0))           --> 0xffffffff
@@ -134,23 +138,39 @@ printx(bit.bnot(0x12345678))  --> 0xedcba987
 
 ```
 
-### `y = bit.bor(x1 [,x2...])y = bit.band(x1 [,x2...])y = bit.bxor(x1 [,x2...])`
+### `y = bit.bor(x1 [,x2...])`
+
+### `y = bit.band(x1 [,x2...])`
+
+### `y = bit.bxor(x1 [,x2...])`
 
 Returns either the bitwise **or**, bitwise **and**, or bitwise **xor** of all of its arguments. Note that more than two arguments are allowed.
+
+分别返回参数的**或、与、非**运算结果。注意，参数个数可以大于两个。
 
 ```
 print(bit.bor(1, 2, 4, 8))                --> 15
 printx(bit.band(0x12345678, 0xff))        --> 0x00000078
 printx(bit.bxor(0xa5a5f0f0, 0xaa55ff00))  --> 0x0ff00ff0
-
 ```
 
-### `y = bit.lshift(x, n)y = bit.rshift(x, n)y = bit.arshift(x, n)`
+### `y = bit.lshift(x, n)`
+
+### `y = bit.rshift(x, n)`
+
+### `y = bit.arshift(x, n)`
 
 Returns either the bitwise **logical left-shift**, bitwise **logical right-shift**, or bitwise **arithmetic right-shift** of its first argument by the number of bits given by the second argument.
 
+返回第一个参数按第二参数指定的位数进行逻辑左移、逻辑右移、算术右移的结果。
+
 Logical shifts treat the first argument as an unsigned number and shift in 0-bits. Arithmetic right-shift treats the most-significant bit as a sign bit and replicates it.
+
+逻辑左移将第一个参数视为无符号数字并以0进行移位。算术右移将最大的位视为符号位并以它进行移位。
+
 Only the lower 5 bits of the shift count are used (reduces to the range [0..31]).
+
+移位计数器只有低五位被使用（范围限制在[0..31]）
 
 ```
 print(bit.lshift(1, 0))              --> 1
@@ -163,23 +183,27 @@ print(bit.arshift(-256, 8))          --> -1
 printx(bit.lshift(0x87654321, 12))   --> 0x54321000
 printx(bit.rshift(0x87654321, 12))   --> 0x00087654
 printx(bit.arshift(0x87654321, 12))  --> 0xfff87654
-
 ```
 
-### `y = bit.rol(x, n)y = bit.ror(x, n)`
+### `y = bit.rol(x, n)`
+
+### `y = bit.ror(x, n)`
 
 Returns either the bitwise **left rotation**, or bitwise **right rotation** of its first argument by the number of bits given by the second argument. Bits shifted out on one side are shifted back in on the other side.
 Only the lower 5 bits of the rotate count are used (reduces to the range [0..31]).
 
+返回将第一个参数按第二个参数的给定值进行按位**左旋转**、按位**右旋转**后的结果。比特位从一端移除后从另一端移入。
+
 ```
 printx(bit.rol(0x12345678, 12))   --> 0x45678123
 printx(bit.ror(0x12345678, 12))   --> 0x67812345
-
 ```
 
 ### `y = bit.bswap(x)`
 
 Swaps the bytes of its argument and returns it. This can be used to convert little-endian 32 bit numbers to big-endian 32 bit numbers or vice versa.
+
+交换参数的字节并返回。这可以用于将32位的小端序数字转化为32位大端序数字，反之亦然。
 
 ```
 printx(bit.bswap(0x12345678)) --> 0x78563412
