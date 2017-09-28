@@ -266,31 +266,126 @@ You may also want to avoid the default number to string coercion, since this is 
 
 您也可以避免使用默认的字符串强制号码，因为这是一个有符号的转换。这种强制被用于连接和所有接受字符串参数的标准库函数（例如`print()`和`io.write()`）
 
-### Conditionals
+### Conditionals-条件
 
 If you're transcribing some code from C/C++, watch out for bit operations in conditionals. In C/C++ any non-zero value is implicitly considered as "true". E.g. this C code:
+
+如果你正在从C/C++中改写一些代码，小心位运算的条件。在C/C++中任何非0的值都隐式的被视作“true”。例如这段C代码：
+
 `  if (x & 3) ...`
 must not be turned into this Lua code:
+
+一定不要改写成这样的Lua代码：
+
 `  if band(x, 3) then ... -- *wrong!*`
 
 In Lua all objects except `nil` and `false` are considered "true". This includes all numbers. An explicit comparison against zero is required in this case:
+
+在Lua的所有对象中，只有`nil`和`false`被视为“true”。这包括了所有的数字。这种情况下需要显示的和0进行比较。
+
 `  if band(x, 3) ~= 0 then ... -- *correct!*`
 
-### Comparing Against Hex Literals
+### Comparing Against Hex Literals-比较16进制字面量
 
 Comparing the results of bitwise operations (*signed* numbers) against hex literals (*unsigned* numbers) needs some additional care. The following conditional expression may or may not work right, depending on the platform you run it on:
+
+对位运算的结果（有符号数）和十六进制字面量（无符号数）进行比较时需要一些额外的注意。下列的条件表达式可能不能正常运行，取决于运行的平台：
+
 `  bit.bor(x, 1) == 0xffffffff`
 E.g. it's never true on a Lua installation with the default number type. Some simple solutions:
 
+例如，在一个以默认数字类型安装的Lua上，它永远不会为“true”。一些简单的解决方法：
+
 - Either never use hex literals larger than 0x7fffffff in comparisons:
+
+  在比较的时候永远不要使用比0x7fffffff大的十六进制字面量：
+
   `  bit.bor(x, 1) == -1`
+
 - Or convert them with `bit.tobit()` before comparing:
+
+  在比较前使用`bit.tobit()`将他们进行转换：
+
   `  bit.bor(x, 1) == bit.tobit(0xffffffff)`
+
 - Or use a generic workaround with `bit.bxor()`:
+
+  或者借由`bit.bxor()`使用一个通用的解决方案：
+
   `  bit.bxor(bit.bor(x, 1), 0xffffffff) == 0`
+
 - Or use a case-specific workaround:
+
+  或者使用一个特定情况的解决方案：
+
   `  bit.rshift(x, 1) == 0x7fffffff`
 
 
-
 # Operational Semantics and Rationale-操作语义和原理
+
+Lua uses only a single number type which can be redefined at compile-time. By default this is a `double`, i.e. a floating-point number with 53 bits of precision. Operations in the range of 32 bit numbers (and beyond) are exact. There is no loss of precision, so there is no need to add an extra integer number type. Modern desktop and server CPUs have fast floating-point hardware — FP arithmetic is nearly the same speed as integer arithmetic. Any differences vanish under the overhead of the Lua interpreter itself.
+
+Lua只使用一种数字类型，它可以在编译的时候重新定义。默认的是`double`，即一个53位精度的浮点数。32位数（或更大）范围内的操作是准确的。并且没有精度丢失，所以没有必要增加一个额外的整数类型。现在涿县和服务器CPU拥有快速浮点运算硬件使得浮点算术的运算几乎和整数算术的速度一样快。任何的差异在Lua解释器本身的开销下都将消失。
+
+Even today, many embedded systems lack support for fast FP operations. These systems benefit from compiling Lua with an integer number type (with 32 bits or more).
+
+即使在今天，很多嵌入式系统都缺乏对快速浮点运算的支持，这些系统使用整数类型（32位或更多）编译Lua会更好。
+
+The different possible number types and the use of FP numbers cause some problems when defining bitwise operations on Lua numbers. The following sections define the operational semantics and try to explain the rationale behind them.
+
+不同的数字类型和浮点数的使用在为Lua数字定义位运算的时候会造成一些问题，下面的内容定义运算的语义并尝试解释背后的原理。
+
+## Input and Output Ranges-输入输出范围
+
+- Bitwise operations cannot sensibly be applied to FP numbers (or their underlying bit patterns). They must be converted to integers before operating on them and then back to FP numbers.
+
+  位运算不能直接应用到浮点数上（或者他们的底层位模式）。他们必须在运算前被转换位整数，然后再转换回浮点数。
+
+- It's desirable to define semantics that work the same across all platforms. This dictates that **all operations are based on** the common denominator of **32 bit integers**.
+
+  最好定义所有平台上工作相同的语义。这规定**所有操作均基于****32位整数**的相同标准。
+
+- The `float` type provides only 24 bits of precision. This makes it unsuitable for use in bitwise operations. Lua BitOp refuses to compile against a Lua installation with this number type.
+
+  `float`类型只提供了24位精度，这使得它不适合应用再位运算中。Lua BitOP拒绝使用这个数字类型进行编译安装。
+
+- Bit operations only deal with the underlying bit patterns and generally ignore signedness (except for arithmetic right-shift). They are commonly displayed and treated like unsigned numbers, though.
+
+  位运算只处理底层位模式，并且通常忽略符号位（除了算术右移）。虽然他们被惯常的表示并且和无符号数一样对待。
+
+- But the Lua number type must be signed and may be limited to 32 bits. Defining the result type as an unsigned number would not be cross-platform safe. All bit operations are thus defined to **return results in the range of signed 32 bit numbers** (converted to the Lua number type).
+
+  但是Lua的数字类型必须是有符号的，并且被限制到32位。将结果类型定义为一个无符号数对于跨平台来说是不安全的。所有的位运算也因此被定义为**返回结果在32位的有符号数字的范围内**（被转换为Lua数字类型）。
+
+- **Hexadecimal literals are** treated as **unsigned numbers** by the Lua parser before converting them to the Lua number type. This means they can be out of the range of signed 32 bit integers if the Lua number type has a greater range. E.g. 0xffffffff has a value of 4294967295 in the default installation, but may be -1 on embedded systems.
+
+  Lua解释器在将**十六进制字面量**转换为Lua数字类型前将他们视为**无符号数**。也意味着，如果Lua的数字类型又一个更大的范围，他们可能会超出32位有符号数的范围。例如，0xffffffff在默认安装的方式下值为4294969295，但是在嵌入式系统中可能是1。
+
+- It's highly desirable that hex literals are treated uniformly across systems when used in bitwise operations. **All bit operations accept arguments in the signed or the unsigned 32 bit range** (and more, see below). Numbers with the same underlying bit pattern are treated the same by all operations.
+
+  非常希望十六进制字面量在跨平台使用位运算的时候能被相同的处理。所有的位运算都接受32位的有符号或无符号数字（或者更多，往下看）。相同位模式的数字在所有的运算中都被同样的对待。
+
+## Modular Arithmetic
+
+Arithmetic operations on n-bit integers are usually based on the rules of [modular arithmetic](http://en.wikipedia.org/wiki/Modular_arithmetic) modulo 2n. Numbers wrap around when the mathematical result of operations is outside their defined range. This simplifies hardware implementations and some algorithms actually require this behavior (like many cryptographic functions).
+
+E.g. for 32 bit integers the following holds: `0xffffffff + 1 = 0`
+
+**Arithmetic modulo 232** is trivially available if the Lua number type is a 32 bit integer. Otherwise normalization steps must be inserted. Modular arithmetic should work the same across all platforms as far as possible:
+
+- For the default number type of `double`, **arguments can be in the range of ±251** and still be safely normalized across all platforms by taking their least-significant 32 bits. The limit is derived from the way doubles are converted to integers.
+- The function `bit.tobit` **can be used to explicitly normalize numbers** to implement **modular addition or subtraction**. E.g. `bit.tobit(0xffffffff + 1)` returns 0 on all platforms.
+- The limit on the argument range implies that modular multiplication is usually restricted to multiplying already normalized numbers with small constants. FP numbers are limited to 53 bits of precision, anyway. E.g. (230+1)2 does not return an odd number when computed with doubles.
+
+BTW: The `tr_i` function shown [here](http://bitop.luajit.org/api.html#shortcuts) is one of the non-linear functions of the (flawed) MD5 cryptographic hash and relies on modular arithmetic for correct operation. The result is fed back to other bitwise operations (not shown) and does not need to be normalized until the last step.
+
+## Restricted and Undefined Behavior
+
+The following rules are intended to give a precise and useful definition (for the programmer), yet give the implementation (interpreter and compiler) the maximum flexibility and the freedom to apply advanced optimizations. It's strongly advised *not* to rely on undefined or implementation-defined behavior.
+
+- All kinds of floating-point numbers are acceptable to the bitwise operations. None of them cause an error, but some may invoke undefined behavior:
+  - -0 is treated the same as +0 on input and is never returned as a result.
+  - Passing **±Inf, NaN or numbers outside the range of ±251** as input yields an **undefined** result.
+  - **Non-integral numbers** may be rounded or truncated in an **implementation-defined** way. This means the result could differ between different BitOp versions, different Lua VMs, on different platforms or even between interpreted vs. compiled code (as in [LuaJIT](http://luajit.org/)).
+    Avoid passing fractional numbers to bitwise functions. Use `math.floor()` or `math.ceil()` to get defined behavior.
+- Lua provides **auto-coercion of string arguments** to numbers by default. This behavior is **deprecated** for bitwise operations.
